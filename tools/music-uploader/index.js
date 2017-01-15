@@ -6,7 +6,7 @@
 	const FIREBASE_PROJECT_ID = FIREBASE_CONFIG.PROJECT_ID;
 	const FIREBASE_BUCKET_NAME = FIREBASE_CONFIG.BUCKET_NAME;	
 	const FIREBASE_CONFIG_CONFIG = FIREBASE_CONFIG.CONFIG;
-	const FIREBASE_SERVICE_ACCOUNT_JSON_FILENAME = FIREBASE_CONFIG.FIREBASE_SERVICE_ACCOUNT_JSON_FILENAME;
+	const FIREBASE_SERVICE_ACCOUNT_JSON_FILENAME = FIREBASE_CONFIG.SERVICE_ACCOUNT_JSON_FILENAME;
 	const FIREBASE_USER = FIREBASE_CONFIG.USER;
 	const SUPPORTED_FILE_TYPES = [ "mp3" ];
 	const MUSIC_UPLOAD_ROOT_FOLDER = "music";
@@ -14,7 +14,6 @@
 	/** module requires **/
 	const firebase = require("firebase");
 	const fs = require("fs");
-	console.log(JSON.stringify(FIREBASE_CONFIG));
 	const gcs = require("@google-cloud/storage")({
 		projectId: FIREBASE_PROJECT_ID,
 		keyFilename: `../../_no_commit/${FIREBASE_SERVICE_ACCOUNT_JSON_FILENAME}`
@@ -137,7 +136,6 @@
 					
 					id3Parser.parse(fs.readFileSync(targetItemFullPath))
 						.then(tags => {
-							console.log("uploadddd");
 							bucket.upload(
 								targetItemFullPath,
 								{
@@ -145,7 +143,6 @@
 									public: true
 								},
 								(err, file, apiResponse) => {
-									console.log("callback");
 									if (!err) {
 										uploadQueue.numOfUploads++;
 										addSongToDatabase(targetItemFullPath, file.metadata, tags, parentDirName).then(() => {
