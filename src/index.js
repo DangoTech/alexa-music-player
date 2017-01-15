@@ -117,9 +117,6 @@ exports.handler = function (event, context, callback) {
         && event.session.application
         && event.session.application.applicationId !== APP_ID
         && event.session.application.applicationId !== APP_TEST_ID) {
-            console.log(event.session);
-            console.log(APP_ID);
-            console.log(APP_TEST_ID);
         context.fail("ERROR: Invalid Application ID");
     }
     else {

@@ -9,7 +9,7 @@ let awsLambda = require("node-aws-lambda");
 
 let BASE_DIR = "..";
 let SRC_DIR = BASE_DIR + "/src";
-let NO_COMMIT_DIR = SRC_DIR + "/_no_commit";
+let NO_COMMIT_DIR = BASE_DIR + "/_no_commit";
 let DIST_DIR = "dist";
 let ZIPFILE_NAME = "dist.zip";
 let BUILDMODE = "test";
