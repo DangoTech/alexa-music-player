@@ -2,8 +2,7 @@
 var firebase = require('firebase');
 var fs = require('fs');
 
-//var Playlist = require('./playlist');
-class Playlist {
+var Playlist = require('./playlist');
 
     constructor(playlistId, currentIndex) {
         this.playlistId = playlistId;
@@ -101,6 +100,13 @@ let APP_NAME = ALEXA_CONFIG.NAME;
 
 // location of _no_commit is off by 1 folder directory
 let FIREBASE_CONFIG = require('./_no_commit/firebase-config.json');
+
+let ALEXA_CONFIG = require('../_no_commit/alexa-config.json');
+let ALEXA_SKILL_ID = ALEXA_CONFIG.ID;
+let ALEXA_SKILL_TEST_ID = ALEXA_CONFIG.TEST_ID;
+let ALEXA_SKILL_NAME = ALEXA_CONFIG.NAME;
+
+let FIREBASE_CONFIG = require('../_no_commit/firebase-config.json');
 let FIREBASE_USERNAME = FIREBASE_CONFIG.USER.USERNAME;
 let FIREBASE_PASSWORD = FIREBASE_CONFIG.USER.PASSWORD;
 let FIREBASE_CONFIG_CONFIG = FIREBASE_CONFIG.CONFIG;
@@ -117,8 +123,8 @@ exports.handler = function (event, context, callback) {
 
     if (event.session
         && event.session.application
-        && event.session.application.applicationId !== APP_ID
-        && event.session.application.applicationId !== APP_TEST_ID) {
+        && event.session.application.applicationId !== ALEXA_SKILL_ID
+        && event.session.application.applicationId !== ALEXA_SKILL_TEST_ID) {
         context.fail("ERROR: Invalid Application ID");
     }
     else {
@@ -265,7 +271,7 @@ function onIntentRequest(event, context, callback) {
         case "AMAZON.YesIntent":
             respond(
                 /*context:*/ context,
-                /*spokenMessage:*/ `${APP_NAME} didn't expect to get an IntentRequest with name ${event.request.intent.name}.`,
+                /*spokenMessage:*/ `${ALEXA_SKILL_NAME} didn't expect to get an IntentRequest with name ${event.request.intent.name}.`,
                 /*cardMessage:*/ null,
                 /*audioUrl:*/ null,
                 /*playBehavior:*/ null,
@@ -289,7 +295,7 @@ function onIntentRequest(event, context, callback) {
         default:
             respond(
                 /*context:*/ context,
-                /*spokenMessage:*/ `${APP_NAME} didn't expect to get an IntentRequest with name ${event.request.intent.name}.`,
+                /*spokenMessage:*/ `${ALEXA_SKILL_NAME} didn't expect to get an IntentRequest with name ${event.request.intent.name}.`,
                 /*cardMessage:*/ null,
                 /*audioUrl:*/ null,
                 /*playBehavior:*/ null,
@@ -382,7 +388,7 @@ function buildResponseJSON(
         responseBody.response.card =
             {
                 type: "Simple",
-                title: APP_NAME,
+                title: ALEXA_SKILL_NAME,
                 content: cardMessage,
             };
     }
