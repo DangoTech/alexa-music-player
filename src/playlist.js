@@ -1,5 +1,5 @@
-class Playlist {
-
+"use strict";
+module.exports = class Playlist {
     constructor(playlistId, currentIndex) {
         this.playlistId = playlistId;
         this.currentIndex = currentIndex;
@@ -62,6 +62,10 @@ class Playlist {
     getSongDownloadUrls() {
         let songIds;
         let downloadUrls;
+        let firebase = require('firebase');
+        let FIREBASE_CONFIG = require('./_no_commit/firebase-config.json');
+        let FIREBASE_USERNAME = FIREBASE_CONFIG.USER.USERNAME;
+        let FIREBASE_PASSWORD = FIREBASE_CONFIG.USER.PASSWORD;
         // log-in to firebase
         return firebase.auth().signInWithEmailAndPassword(FIREBASE_USERNAME, FIREBASE_PASSWORD)
             // fetch songs in playlist

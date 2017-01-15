@@ -1,95 +1,8 @@
 'use strict';
 var firebase = require('firebase');
 var fs = require('fs');
+
 var Playlist = require('./playlist');
-
-    constructor(playlistId, currentIndex) {
-        this.playlistId = playlistId;
-        this.currentIndex = currentIndex;
-    }
-
-    playFirst(event, context) {
-        this.currentIndex = 0;
-        this.buildAudioPlayerResponse(event, context, 0, true);
-    }
-
-    playPrevious(event, context) {
-        this.buildAudioPlayerResponse(event, context, -1, true);
-    }
-
-    playNext(event, context) {
-        this.buildAudioPlayerResponse(event, context, 1, true);
-    }
-
-    queuePrevious(event, context) {
-        this.buildAudioPlayerResponse(event, context, -1, false);
-    }
-
-    queueNext(event, context) {
-        this.buildAudioPlayerResponse(event, context, 1, false);
-    }
-
-    buildAudioPlayerResponse(event, context, indexOffset, isPlayImmediately) {
-        console.log("queue");
-        this.getSongDownloadUrls()
-            .then((urls) => {
-                if (urls[this.currentIndex + indexOffset]) {
-                    this.currentIndex += indexOffset;
-                    respond(
-                        /*context:*/ context,
-                        /*spokenMessage:*/ null,
-                        /*cardMessage:*/ null,
-                        /*audioUrl:*/ urls[this.currentIndex],
-                        /*playBehavior:*/ isPlayImmediately ? "REPLACE_ALL"  : "ENQUEUE",
-                        /*token:*/ this.getTokenJson(),
-                        /*expectedPreviousToken:*/ event.context.AudioPlayer.token,
-                        /*shouldEndSession:*/ true,
-                        /*isStop:*/ false,
-                        /*isClearQueue:*/ false);
-                } else {
-                    respond(
-                        /*context:*/ context,
-                        /*spokenMessage:*/ null,
-                        /*cardMessage:*/ null,
-                        /*audioUrl:*/ null,
-                        /*playBehavior:*/ null,
-                        /*token:*/ this.getTokenJson(),
-                        /*expectedPreviousToken:*/ null,
-                        /*shouldEndSession:*/ true,
-                        /*isStop:*/ false,
-                        /*isClearQueue:*/ false);
-                }
-            });
-    }
-
-    getSongDownloadUrls() {
-        let songIds;
-        let downloadUrls;
-        // log-in to firebase
-        return firebase.auth().signInWithEmailAndPassword(FIREBASE_USERNAME, FIREBASE_PASSWORD)
-            // fetch songs in playlist
-            .then(() => firebase.database().ref(`playlists/${this.playlistId}/songs`).once('value'))
-            // extract songIds from songs in playlist
-            // fetch all songs
-            .then(snapshot => {
-                var playlistSongs = snapshot.val();
-                songIds = Object.keys(playlistSongs).map(playlistSongKey => playlistSongs[playlistSongKey].songId);
-                return firebase.database().ref('songs').once('value');
-            // use songIds to extract downloadUrls from songs
-            }).then(snapshot => {
-                var songs = snapshot.val();
-                downloadUrls = songIds.map(songId => songs[songId].downloadUrl);
-                return firebase.auth().signOut();
-            }).then(() => downloadUrls);
-    }
-
-    getTokenJson() {
-        return JSON.stringify({
-            playlistId: this.playlistId,
-            currentIndex: this.currentIndex
-        });
-    }
-}
 
 // location of _no_commit is off by 1 folder directory
 let ALEXA_CONFIG = require('./_no_commit/alexa-config.json');
@@ -99,8 +12,6 @@ let ALEXA_SKILL_NAME = ALEXA_CONFIG.NAME;
 
 // location of _no_commit is off by 1 folder directory
 let FIREBASE_CONFIG = require('./_no_commit/firebase-config.json');
-let FIREBASE_USERNAME = FIREBASE_CONFIG.USER.USERNAME;
-let FIREBASE_PASSWORD = FIREBASE_CONFIG.USER.PASSWORD;
 let FIREBASE_CONFIG_CONFIG = FIREBASE_CONFIG.CONFIG;
 
 const DEFAULT_PLAYLIST_ID = "tangled";
