@@ -1,7 +1,6 @@
 'use strict';
 var firebase = require('firebase');
 var fs = require('fs');
-
 var Playlist = require('./playlist');
 
     constructor(playlistId, currentIndex) {
