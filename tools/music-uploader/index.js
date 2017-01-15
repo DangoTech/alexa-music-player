@@ -2,7 +2,7 @@
 	"use strict";
 
 	/** constants **/
-	let FIREBASE_CONFIG = require('./firebase-config');
+	let FIREBASE_CONFIG = require('../../_no_commit/firebase-config');
 	const FIREBASE_PROJECT_ID = FIREBASE_CONFIG.PROJECT_ID;
 	const FIREBASE_BUCKET_NAME = FIREBASE_CONFIG.BUCKET_NAME;	
 	const FIREBASE_CONFIG = FIREBASE_CONFIG.CONFIG;
@@ -47,8 +47,8 @@
 	function signInUser() {
 		return firebase.auth()
 			.signInWithEmailAndPassword(
-				FIREBASE_USER.email,
-				FIREBASE_USER.password)
+				FIREBASE_USER.USERNAME,
+				FIREBASE_USER.PASSWORD)
 			.then(
 				() => {
 					logSuccess("signInUser", "User signed in.");

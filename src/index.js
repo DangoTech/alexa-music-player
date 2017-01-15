@@ -97,9 +97,11 @@ let APP_INFO = require('./AppInfo');
 let APP_ID = APP_INFO.APP.ID;
 let APP_TEST_ID = APP_INFO.APP.TEST_ID;
 let APP_NAME = APP_INFO.APP.NAME;
-let FIREBASE_USERNAME = APP_INFO.FIREBASE.USERNAME;
-let FIREBASE_PASSWORD = APP_INFO.FIREBASE.PASSWORD;
-let FIREBASE_CONFIG = APP_INFO.FIREBASE.CONFIG;
+
+let FIREBASE_CONFIG = require('../_no_commit/firebase-config');
+let FIREBASE_USERNAME = FIREBASE_CONFIG.USER.USERNAME;
+let FIREBASE_PASSWORD = FIREBASE_CONFIG.USER.PASSWORD;
+let FIREBASE_CONFIG_CONFIG = FIREBASE_CONFIG.CONFIG;
 
 const DEFAULT_PLAYLIST_ID = "tangled";
     
@@ -119,7 +121,7 @@ exports.handler = function (event, context, callback) {
     }
     else {
         try {
-            firebase.initializeApp(FIREBASE_CONFIG);
+            firebase.initializeApp(FIREBASE_CONFIG_CONFIG);
         } catch (e) {}
 
         try {
