@@ -9,7 +9,8 @@ let awsLambda = require("node-aws-lambda");
 
 let BASE_DIR = "..";
 let SRC_DIR = BASE_DIR + "/src";
-let NO_COMMIT_DIR = BASE_DIR + "/_no_commit";
+let NO_COMMIT = "_no_commit";
+let NO_COMMIT_DIR = BASE_DIR + "/" + NO_COMMIT;
 let DIST_DIR = "dist";
 let ZIPFILE_NAME = "dist.zip";
 let BUILDMODE = "test";
@@ -22,9 +23,14 @@ gulp.task('clean', () => {
 });
 
 gulp.task('src', () => {
-    return gulp.src([SRC_DIR + '/**/*.js*',
+    return gulp.src([SRC_DIR + '/**/*.js',
             '!' + SRC_DIR + '/interaction-model/**'])
         .pipe(gulp.dest(BUILD_DIR));
+});
+
+gulp.task('private_src', () => {
+    return gulp.src([NO_COMMIT_DIR + '/**/*.js*'])
+        .pipe(gulp.dest(BUILD_DIR + '/' + NO_COMMIT));
 });
 
 gulp.task('node_modules', () => {
@@ -56,6 +62,7 @@ gulp.task('upload-production', function(callback) {
 gulp.task('deploy-test', callback => {
     return runSequence(['clean'],
         ['src'],
+        ['private_src'],
         ['node_modules'],
         ['zip'],
         ['upload-test'],
@@ -67,6 +74,7 @@ gulp.task('deploy-production', callback => {
     BUILD_DIR = DIST_DIR + '_' + BUILDMODE;
     return runSequence(['clean'],
         ['src'],
+        ['private_src'],
         ['node_modules'],
         ['zip'],
         ['upload-production'],

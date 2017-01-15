@@ -93,11 +93,13 @@ class Playlist {
     }
 }
 
+// location of _no_commit is off by 1 folder directory
 let ALEXA_CONFIG = require('./_no_commit/alexa-config.json');
 let APP_ID = ALEXA_CONFIG.ID;
 let APP_TEST_ID = ALEXA_CONFIG.TEST_ID;
 let APP_NAME = ALEXA_CONFIG.NAME;
 
+// location of _no_commit is off by 1 folder directory
 let FIREBASE_CONFIG = require('./_no_commit/firebase-config.json');
 let FIREBASE_USERNAME = FIREBASE_CONFIG.USER.USERNAME;
 let FIREBASE_PASSWORD = FIREBASE_CONFIG.USER.PASSWORD;
