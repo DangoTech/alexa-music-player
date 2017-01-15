@@ -1,0 +1,19 @@
+{
+  "name": "build-alexa-music-player",
+  "version": "1.0.0",
+  "description": "",
+  "main": "gulpfile.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {},
+  "jshintConfig": {
+    "esversion": 6,
+    "node": true
+  },
+  "devDependencies": {
+    "run-sequence": "^1.2.2"
+  }
+}

@@ -1,0 +1,6 @@
+AMAZON.RepeatIntent play again
+
+PlayPlaylist play {PlaylistId}
+PlayPlaylist play the playlist called {PlaylistId}
+PlayPlaylist play the playlist {PlaylistId}
+PlayPlaylist {PlaylistId}

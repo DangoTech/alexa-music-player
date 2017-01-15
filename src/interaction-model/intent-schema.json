@@ -1,0 +1,22 @@
+{
+  "intents": [
+    {
+        "intent": "AMAZON.PauseIntent"
+    },
+    {
+        "intent": "AMAZON.ResumeIntent"
+    },
+    {
+        "intent": "AMAZON.RepeatIntent"
+    },
+    {
+        "intent": "PlayPlaylist",
+        "slots": [
+            {
+                "name": "PlaylistName",
+                "type": "LIST_OF_PLAYLIST_NAMES"
+            }
+        ]
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "name": "music_box_uploader",
+  "version": "1.0.0",
+  "description": "Automatically uploads music from local machine to Firebase storage and keeps a record of the music files in the Firebase database",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@google-cloud/storage": "^0.6.0",
+    "firebase": "^3.6.4",
+    "gcloud": "^0.37.0",
+    "id3-parser": "^1.1.1"
+  }
+}
