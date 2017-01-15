@@ -13,5 +13,10 @@
     "firebase": "^3.6.4",
     "gcloud": "^0.37.0",
     "id3-parser": "^1.1.1"
+  },
+  "jshintConfig": {
+    "esversion": 6,
+    "node": true,
+    "laxbreak": true
   }
 }

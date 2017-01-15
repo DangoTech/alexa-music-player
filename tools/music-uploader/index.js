@@ -5,7 +5,7 @@
 	let FIREBASE_CONFIG = require('../../_no_commit/firebase-config');
 	const FIREBASE_PROJECT_ID = FIREBASE_CONFIG.PROJECT_ID;
 	const FIREBASE_BUCKET_NAME = FIREBASE_CONFIG.BUCKET_NAME;	
-	const FIREBASE_CONFIG = FIREBASE_CONFIG.CONFIG;
+	const FIREBASE_CONFIG_CONFIG = FIREBASE_CONFIG.CONFIG;
 	const FIREBASE_SERVICE_ACCOUNT_JSON_FILENAME = FIREBASE_CONFIG.FIREBASE_SERVICE_ACCOUNT_JSON_FILENAME;
 	const FIREBASE_USER = FIREBASE_CONFIG.USER;
 	const SUPPORTED_FILE_TYPES = [ "mp3" ];
@@ -13,10 +13,11 @@
 	
 	/** module requires **/
 	const firebase = require("firebase");
-	const fs = require("fs");	
+	const fs = require("fs");
+	console.log(JSON.stringify(FIREBASE_CONFIG));
 	const gcs = require("@google-cloud/storage")({
 		projectId: FIREBASE_PROJECT_ID,
-		keyFilename: FIREBASE_SERVICE_ACCOUNT_JSON_FILENAME
+		keyFilename: `../../_no_commit/${FIREBASE_SERVICE_ACCOUNT_JSON_FILENAME}`
 	});
 	const id3Parser = require("id3-parser");
 	
@@ -40,7 +41,7 @@
 	function initModules() {
 		bucket = gcs.bucket(FIREBASE_BUCKET_NAME);
 		
-		firebase.initializeApp(FIREBASE_CONFIG);
+		firebase.initializeApp(FIREBASE_CONFIG_CONFIG);
 		database = firebase.database();
 	}
 	
@@ -102,7 +103,7 @@
 				lastQueueItem.targetIndex++;
 			}
 			uploadItem(uploadQueue);
-		}
+		};
 		let uploadFirstChildItem = (uploadQueue, targetItemFullPath, targetItemName) => {
 			let childrenItemNames = fs.readdirSync(targetItemFullPath);
 			uploadQueue.queueItems.push({
@@ -112,11 +113,11 @@
 				parentDirName: targetItemName
 			});
 			uploadItem(uploadQueue);
-		}
+		};
 		let uploadNextParentSiblingItem = (uploadQueue) => {
 			uploadQueue.queueItems.pop();
 			uploadNextSiblingItem(uploadQueue);
-		}
+		};
 		
 		if (targetIndex < itemNames.length) {
 			
@@ -136,6 +137,7 @@
 					
 					id3Parser.parse(fs.readFileSync(targetItemFullPath))
 						.then(tags => {
+							console.log("uploadddd");
 							bucket.upload(
 								targetItemFullPath,
 								{
@@ -143,6 +145,7 @@
 									public: true
 								},
 								(err, file, apiResponse) => {
+									console.log("callback");
 									if (!err) {
 										uploadQueue.numOfUploads++;
 										addSongToDatabase(targetItemFullPath, file.metadata, tags, parentDirName).then(() => {
