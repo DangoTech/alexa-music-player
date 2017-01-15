@@ -1,4 +1,6 @@
 "use strict";
+var AlexaService = require("./alexa-service");
+
 module.exports = class Playlist {
     constructor(playlistId, currentIndex) {
         this.playlistId = playlistId;
@@ -32,7 +34,7 @@ module.exports = class Playlist {
             .then((urls) => {
                 if (urls[this.currentIndex + indexOffset]) {
                     this.currentIndex += indexOffset;
-                    respond(
+                    AlexaService.respond(
                         /*context:*/ context,
                         /*spokenMessage:*/ null,
                         /*cardMessage:*/ null,
@@ -44,7 +46,7 @@ module.exports = class Playlist {
                         /*isStop:*/ false,
                         /*isClearQueue:*/ false);
                 } else {
-                    respond(
+                    AlexaService.respond(
                         /*context:*/ context,
                         /*spokenMessage:*/ null,
                         /*cardMessage:*/ null,
@@ -90,4 +92,4 @@ module.exports = class Playlist {
             currentIndex: this.currentIndex
         });
     }
-}
+};

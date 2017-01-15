@@ -1,17 +1,18 @@
-'use strict';
-var firebase = require('firebase');
-var fs = require('fs');
+"use strict";
+var firebase = require("firebase");
+var fs = require("fs");
 
-var Playlist = require('./playlist');
+var Playlist = require("./playlist");
+var AlexaService = require("./alexa-service");
 
 // location of _no_commit is off by 1 folder directory
-let ALEXA_CONFIG = require('./_no_commit/alexa-config.json');
+let ALEXA_CONFIG = require("./_no_commit/alexa-config.json");
 let ALEXA_SKILL_ID = ALEXA_CONFIG.ID;
 let ALEXA_SKILL_TEST_ID = ALEXA_CONFIG.TEST_ID;
 let ALEXA_SKILL_NAME = ALEXA_CONFIG.NAME;
 
 // location of _no_commit is off by 1 folder directory
-let FIREBASE_CONFIG = require('./_no_commit/firebase-config.json');
+let FIREBASE_CONFIG = require("./_no_commit/firebase-config.json");
 let FIREBASE_CONFIG_CONFIG = FIREBASE_CONFIG.CONFIG;
 
 const DEFAULT_PLAYLIST_ID = "tangled";
@@ -59,7 +60,7 @@ function processRequest(event, context, callback) {
         case "AudioPlayer.PlaybackStarted":
             // can return STOP or CLEAR_QUEUE directives or empty response
             // cannot return speech/card/reprompt
-            respondWithEndSession(context);
+            AlexaService.respondWithEndSession(context);
             break;
         case "AudioPlayer.PlaybackNearlyFinished":
             // can return any AudioPlayer directive
@@ -69,25 +70,25 @@ function processRequest(event, context, callback) {
         case "AudioPlayer.PlaybackFinished":
             // can return STOP or CLEAR_QUEUE directives or empty response
             // cannot return speech/card/reprompt
-            respondWithEndSession(context);
+            AlexaService.respondWithEndSession(context);
             break;
         case "AudioPlayer.PlaybackStopped":
             // cannot return a response
-            respondWithEndSession(context);
+            AlexaService.respondWithEndSession(context);
             break;
         case "AudioPlayer.PlaybackFailed":
             // can return any AudioPlayer directive
             // cannot return speech/card/reprompt
-            respondWithEndSession(context);
+            AlexaService.respondWithEndSession(context);
             break;
 
         case "System.ExceptionEncountered":
             // cannot return a response
-            respondWithEndSession(context);
+            AlexaService.respondWithEndSession(context);
             break;
 
         default:
-            respondWithEndSession(context);
+            AlexaService.respondWithEndSession(context);
     }
 }
 
@@ -128,7 +129,7 @@ function onIntentRequest(event, context, callback) {
         case "AMAZON.StopIntent":
             if (token){
                 let playlist = new Playlist(token.playlistId, token.currentIndex);
-                respond(
+                AlexaService.respond(
                     /*context:*/ context,
                     /*spokenMessage:*/ null,
                     /*cardMessage:*/ null,
@@ -141,7 +142,7 @@ function onIntentRequest(event, context, callback) {
                     /*isClearQueue:*/ false);
             }
             else {
-                respondWithEndSession(event, context, callback);
+                AlexaService.respondWithEndSession(event, context, callback);
             }
             break;
         case "AMAZON.NextIntent":
@@ -150,7 +151,7 @@ function onIntentRequest(event, context, callback) {
                 playlist.playNext(event, context);
             }
             else {
-                respondWithEndSession(event, context, callback);
+                AlexaService.respondWithEndSession(event, context, callback);
             }
             break;
         case "AMAZON.PreviousIntent":
@@ -159,7 +160,7 @@ function onIntentRequest(event, context, callback) {
                 playlist.playPrevious(event, context);
             }
             else {
-                respondWithEndSession(event, context, callback);
+                AlexaService.respondWithEndSession(event, context, callback);
             }
             break;
         case "AMAZON.HelpIntent":
@@ -172,7 +173,7 @@ function onIntentRequest(event, context, callback) {
         case "AMAZON.ShuffleOnIntent":
         case "AMAZON.StartOverIntent":
         case "AMAZON.YesIntent":
-            respond(
+            AlexaService.respond(
                 /*context:*/ context,
                 /*spokenMessage:*/ `${ALEXA_SKILL_NAME} didn't expect to get an IntentRequest with name ${event.request.intent.name}.`,
                 /*cardMessage:*/ null,
@@ -192,11 +193,11 @@ function onIntentRequest(event, context, callback) {
                 playlist.playFirst(event, context);
             }
             else {
-                respondWithEndSession(event, context, callback);
+                AlexaService.respondWithEndSession(event, context, callback);
             }
             break;
         default:
-            respond(
+            AlexaService.respond(
                 /*context:*/ context,
                 /*spokenMessage:*/ `${ALEXA_SKILL_NAME} didn't expect to get an IntentRequest with name ${event.request.intent.name}.`,
                 /*cardMessage:*/ null,
@@ -219,123 +220,6 @@ function onPlaybackNearlyFinishedRequest(event, context, callback) {
         playlist.queueNext(event, context);
     }
     else {
-        respondWithEndSession(context);
+        AlexaService.respondWithEndSession(context);
     }
-}
-
-function respondWithEndSession(context) {
-    respond(
-        /*context:*/ context,
-        /*spokenMessage:*/ null,
-        /*cardMessage:*/ null,
-        /*audioUrl:*/ null,
-        /*playBehavior:*/ null,
-        /*token:*/ null,
-        /*expectedPreviousToken:*/ null,
-        /*shouldEndSession:*/ true,
-        /*isStop:*/ false,
-        /*isClearQueue:*/ false);
-}
-
-function respond(
-    context,
-    spokenMessage,
-    cardMessage,
-    audioUrl,
-    playBehavior,
-    token,
-    expectedPreviousToken,
-    shouldEndSession,
-    isStop,
-    isClearQueue) {
-
-    context.succeed(
-        buildResponseJSON(
-            spokenMessage,
-            cardMessage,
-            audioUrl,
-            playBehavior,
-            token,
-            expectedPreviousToken,
-            shouldEndSession,
-            isStop,
-            isClearQueue));
-}
-
-function buildResponseJSON(
-    spokenMessage,
-    cardMessage,
-    audioUrl,
-    playBehavior,
-    token,
-    expectedPreviousToken,
-    shouldEndSession,
-    isStop,
-    isClearQueue) {
-
-    var responseBody = {
-        version: "1.0",
-        // sessionAttributes: {}
-        response: {}
-    };
-
-    if (spokenMessage) {
-        responseBody.response.outputSpeech =
-            {
-                type: "PlainText",
-                text: spokenMessage,
-            };
-    }
-
-    if (cardMessage) {
-        responseBody.response.card =
-            {
-                type: "Simple",
-                title: ALEXA_SKILL_NAME,
-                content: cardMessage,
-            };
-    }
-
-    if (audioUrl) {
-        responseBody.response.directives = [
-            {
-                type: "AudioPlayer.Play",
-                playBehavior: playBehavior || "REPLACE_ALL",
-                audioItem: {
-                    stream: {
-                        token: token,
-                        url: audioUrl,
-                        offsetInMilliseconds: 0
-                    }
-                }
-            }
-        ];
-
-        if (responseBody.response.directives[0].playBehavior === "ENQUEUE") {
-            responseBody.response.directives[0].audioItem.stream.expectedPreviousToken = expectedPreviousToken;
-        }
-    }
-
-    if (isStop) {
-        responseBody.response.directives = [
-            {
-                type: "AudioPlayer.Stop"
-            }
-        ];
-    }
-
-    if (isClearQueue) {
-        responseBody.response.directives = [
-            {
-                type: "AudioPlayer.ClearQueue",
-                clearBehavior: "CLEAR_ENQUEUED"
-            }
-        ];
-    }
-
-    responseBody.response.shouldEndSession = !!shouldEndSession;
-
-    console.log(`>> RESPONSE BODY: ${JSON.stringify(responseBody)}`);
-
-    return responseBody;
 }
