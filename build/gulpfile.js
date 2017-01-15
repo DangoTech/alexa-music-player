@@ -7,21 +7,23 @@ let install = require('gulp-install');
 let runSequence = require('run-sequence');
 let awsLambda = require("node-aws-lambda");
 
-let config = require("./lambda-config.js");
-
 let BASE_DIR = "..";
 let SRC_DIR = BASE_DIR + "/src";
+let NO_COMMIT_DIR = SRC_DIR + "/_no_commit";
 let DIST_DIR = "dist";
 let ZIPFILE_NAME = "dist.zip";
 let BUILDMODE = "test";
 let BUILD_DIR = DIST_DIR + '_' + BUILDMODE;
 
+let LAMBDA_CONFIG = require(NO_COMMIT_DIR + "/lambda-config.js");
+
 gulp.task('clean', () => {
-    return del(['dist', 'dist_test', 'dist_production'], {force: true});
+    return del(['dist*/'], {force: true});
 });
 
 gulp.task('src', () => {
-    return gulp.src([SRC_DIR + '/**/*.js', SRC_DIR + '/AppInfo.json'])
+    return gulp.src([SRC_DIR + '/**/*.js*',
+            '!' + SRC_DIR + '/interaction-model/**'])
         .pipe(gulp.dest(BUILD_DIR));
 });
 
@@ -43,12 +45,12 @@ gulp.task('zip', function() {
 });
 
 gulp.task('upload-test', function(callback) {
-    config.functionName = config.functionName + "Test";
-    awsLambda.deploy(BUILD_DIR + '/' + ZIPFILE_NAME, config , callback);
+    LAMBDA_CONFIG.functionName = LAMBDA_CONFIG.functionName + "Test";
+    awsLambda.deploy(BUILD_DIR + '/' + ZIPFILE_NAME, LAMBDA_CONFIG , callback);
 });
 
 gulp.task('upload-production', function(callback) {
-    awsLambda.deploy(BUILD_DIR + '/' + ZIPFILE_NAME, config, callback);
+    awsLambda.deploy(BUILD_DIR + '/' + ZIPFILE_NAME, LAMBDA_CONFIG, callback);
 });
 
 gulp.task('deploy-test', callback => {

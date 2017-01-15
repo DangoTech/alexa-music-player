@@ -9,16 +9,16 @@ class Playlist {
         this.playlistId = playlistId;
         this.currentIndex = currentIndex;
     }
-    
+
     playFirst(event, context) {
         this.currentIndex = 0;
         this.buildAudioPlayerResponse(event, context, 0, true);
     }
-    
+
     playPrevious(event, context) {
         this.buildAudioPlayerResponse(event, context, -1, true);
     }
-    
+
     playNext(event, context) {
         this.buildAudioPlayerResponse(event, context, 1, true);
     }
@@ -26,11 +26,11 @@ class Playlist {
     queuePrevious(event, context) {
         this.buildAudioPlayerResponse(event, context, -1, false);
     }
-    
+
     queueNext(event, context) {
         this.buildAudioPlayerResponse(event, context, 1, false);
     }
-    
+
     buildAudioPlayerResponse(event, context, indexOffset, isPlayImmediately) {
         console.log("queue");
         this.getSongDownloadUrls()
@@ -63,7 +63,7 @@ class Playlist {
                 }
             });
     }
-    
+
     getSongDownloadUrls() {
         let songIds;
         let downloadUrls;
@@ -75,7 +75,7 @@ class Playlist {
             // fetch all songs
             .then(snapshot => {
                 var playlistSongs = snapshot.val();
-                songIds = Object.keys(playlistSongs).map(playlistSongKey => playlistSongs[playlistSongKey].songId); 
+                songIds = Object.keys(playlistSongs).map(playlistSongKey => playlistSongs[playlistSongKey].songId);
                 return firebase.database().ref('songs').once('value');
             // use songIds to extract downloadUrls from songs
             }).then(snapshot => {
@@ -84,7 +84,7 @@ class Playlist {
                 return firebase.auth().signOut();
             }).then(() => downloadUrls);
     }
-    
+
     getTokenJson() {
         return JSON.stringify({
             playlistId: this.playlistId,
@@ -93,18 +93,18 @@ class Playlist {
     }
 }
 
-let APP_INFO = require('./AppInfo');
-let APP_ID = APP_INFO.APP.ID;
-let APP_TEST_ID = APP_INFO.APP.TEST_ID;
-let APP_NAME = APP_INFO.APP.NAME;
+let ALEXA_CONFIG = require('./_no_commit/alexa-config.json');
+let APP_ID = ALEXA_CONFIG.ID;
+let APP_TEST_ID = ALEXA_CONFIG.TEST_ID;
+let APP_NAME = ALEXA_CONFIG.NAME;
 
-let FIREBASE_CONFIG = require('../_no_commit/firebase-config');
+let FIREBASE_CONFIG = require('./_no_commit/firebase-config.json');
 let FIREBASE_USERNAME = FIREBASE_CONFIG.USER.USERNAME;
 let FIREBASE_PASSWORD = FIREBASE_CONFIG.USER.PASSWORD;
 let FIREBASE_CONFIG_CONFIG = FIREBASE_CONFIG.CONFIG;
 
 const DEFAULT_PLAYLIST_ID = "tangled";
-    
+
 exports.handler = function (event, context, callback) {
     if (event
         && event.request
@@ -117,6 +117,9 @@ exports.handler = function (event, context, callback) {
         && event.session.application
         && event.session.application.applicationId !== APP_ID
         && event.session.application.applicationId !== APP_TEST_ID) {
+            console.log(event.session);
+            console.log(APP_ID);
+            console.log(APP_TEST_ID);
         context.fail("ERROR: Invalid Application ID");
     }
     else {
@@ -327,17 +330,17 @@ function respondWithEndSession(context) {
 }
 
 function respond(
-    context, 
-    spokenMessage, 
-    cardMessage, 
-    audioUrl, 
+    context,
+    spokenMessage,
+    cardMessage,
+    audioUrl,
     playBehavior,
     token,
     expectedPreviousToken,
     shouldEndSession,
     isStop,
     isClearQueue) {
-    
+
     context.succeed(
         buildResponseJSON(
             spokenMessage,
@@ -352,8 +355,8 @@ function respond(
 }
 
 function buildResponseJSON(
-    spokenMessage, 
-    cardMessage, 
+    spokenMessage,
+    cardMessage,
     audioUrl,
     playBehavior,
     token,
@@ -361,34 +364,34 @@ function buildResponseJSON(
     shouldEndSession,
     isStop,
     isClearQueue) {
-    
+
     var responseBody = {
         version: "1.0",
         // sessionAttributes: {}
         response: {}
     };
-    
+
     if (spokenMessage) {
-        responseBody.response.outputSpeech = 
+        responseBody.response.outputSpeech =
             {
                 type: "PlainText",
                 text: spokenMessage,
             };
     }
-    
+
     if (cardMessage) {
-        responseBody.response.card = 
+        responseBody.response.card =
             {
                 type: "Simple",
                 title: APP_NAME,
                 content: cardMessage,
             };
     }
-    
+
     if (audioUrl) {
         responseBody.response.directives = [
             {
-                type: "AudioPlayer.Play", 
+                type: "AudioPlayer.Play",
                 playBehavior: playBehavior || "REPLACE_ALL",
                 audioItem: {
                     stream: {
@@ -399,12 +402,12 @@ function buildResponseJSON(
                 }
             }
         ];
-        
+
         if (responseBody.response.directives[0].playBehavior === "ENQUEUE") {
             responseBody.response.directives[0].audioItem.stream.expectedPreviousToken = expectedPreviousToken;
         }
     }
-    
+
     if (isStop) {
         responseBody.response.directives = [
             {
@@ -412,19 +415,19 @@ function buildResponseJSON(
             }
         ];
     }
-    
+
     if (isClearQueue) {
         responseBody.response.directives = [
             {
-                type: "AudioPlayer.ClearQueue", 
+                type: "AudioPlayer.ClearQueue",
                 clearBehavior: "CLEAR_ENQUEUED"
             }
         ];
     }
-    
+
     responseBody.response.shouldEndSession = !!shouldEndSession;
-    
+
     console.log(`>> RESPONSE BODY: ${JSON.stringify(responseBody)}`);
-    
+
     return responseBody;
 }

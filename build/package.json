@@ -13,13 +13,11 @@
     "gulp": "^3.9.1",
     "gulp-install": "^0.6.0",
     "gulp-zip": "^3.2.0",
-    "node-aws-lambda": "^0.1.8"
+    "node-aws-lambda": "^0.1.8",
+    "run-sequence": "^1.2.2"
   },
   "jshintConfig": {
     "esversion": 6,
     "node": true
-  },
-  "devDependencies": {
-    "run-sequence": "^1.2.2"
   }
 }
