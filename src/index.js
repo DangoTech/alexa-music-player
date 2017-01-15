@@ -113,7 +113,8 @@ exports.handler = function (event, context, callback) {
 
     if (event.session
         && event.session.application
-        && event.session.application.applicationId !== APP_ID) {
+        && event.session.application.applicationId !== APP_ID
+        && event.session.application.applicationId !== APP_TEST_ID) {
         context.fail("ERROR: Invalid Application ID");
     }
     else {
