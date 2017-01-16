@@ -1,7 +1,7 @@
 {
-    "slotTypes": {
-        "LIST_OF_PLAYLIST_IDS": {
-           "tangled"
-        }
+  "slotTypes": {
+    "LIST_OF_PLAYLIST_IDS": {
+      "tangled"
     }
+  }
 }
