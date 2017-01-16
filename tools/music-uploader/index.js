@@ -19,6 +19,7 @@
 		keyFilename: `../../_no_commit/${FIREBASE_SERVICE_ACCOUNT_JSON_FILENAME}`
 	});
 	const id3Parser = require("id3-parser");
+	const checksum = require("checksum");
 	
 	/** global variables **/
 	let database, bucket;
@@ -132,10 +133,29 @@
 				});
 				
 				if (isSupportedFileType) {
-					console.log(`Uploading... ${targetItemFullPath}`);
-					
-					id3Parser.parse(fs.readFileSync(targetItemFullPath))
-						.then(tags => {
+					console.log(`Processing... ${targetItemFullPath}`);
+
+					// 1. Check if existing song has the same md5 hash in base64
+					new Promise((resolve, reject) => {
+						checksum.file(
+							targetItemFullPath,
+							{ algorithm: "md5" },
+							(err, md5HashInHex) => {
+								var md5HashInBase64 = new Buffer(md5HashInHex, "hex").toString("base64");
+								database.ref(`songs/${md5HashInBase64}`).once("value")
+									.then(dataSnapshot => {
+										if (dataSnapshot.exists()) {
+											reject("Song already uploaded.");
+										}
+										else {
+											resolve();
+										}
+									});
+							});
+					})
+					// 2. Upload song 
+					.then(() => {
+						return new Promise((resolve, reject) => {
 							bucket.upload(
 								targetItemFullPath,
 								{
@@ -143,19 +163,41 @@
 									public: true
 								},
 								(err, file, apiResponse) => {
-									if (!err) {
-										uploadQueue.numOfUploads++;
-										addSongToDatabase(targetItemFullPath, file.metadata, tags, parentDirName).then(() => {
-											uploadQueue.numOfSongsAdded++;
-											uploadNextSiblingItem(uploadQueue);
-										});											
+									if (err) {
+										reject(err);
 									}
 									else {
-										logError("uploadItem", null, err);
+										uploadQueue.numOfUploads++;
+										resolve(file);
 									}
-								}
-							);
+								});
 						});
+					})
+					// 3. Parse out the ID3 tags from song file
+					.then(file => {
+						return id3Parser.parse(fs.readFileSync(targetItemFullPath))
+							.then(tags => Promise.resolve({
+								tags: tags,
+								file: file
+							}));
+					})
+					// 4. Add song record to database
+					.then(tagsAndFile => {
+						let tags = tagsAndFile.tags;
+						let file = tagsAndFile.file;
+						return addSongToDatabase(
+							targetItemFullPath, 
+							file.metadata, 
+							tags, 
+							parentDirName)
+							.then(() => {
+								uploadQueue.numOfSongsAdded++;
+							});
+					}).catch(err => {
+						logError("uploadItem", null, err);
+					}).then(() => {
+						uploadNextSiblingItem(uploadQueue);
+					});
 				} else {
 					uploadNextSiblingItem(uploadQueue);
 				}
@@ -168,7 +210,7 @@
 			uploadNextParentSiblingItem(uploadQueue);
 		}
 	}
-	
+
 	function addSongToDatabase(songFilePath, fileMetadata, tags, playlistName) {
 		console.log(`Adding to database... ${songFilePath}`);
 		
