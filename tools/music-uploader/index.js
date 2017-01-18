@@ -222,7 +222,7 @@
       let songArtist = tags.artist;       
       let songName = tags.title;
       
-      let songId = fileMetadata.md5Hash;
+      let songId = encodeURIComponent(fileMetadata.md5Hash).replace(/\./g, '%2E');
       let downloadUrl = fileMetadata.mediaLink;
 
       return database.ref(`songs/${songId}`).set(
