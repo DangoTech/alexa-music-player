@@ -68,6 +68,7 @@ module.exports = class Playlist {
     let FIREBASE_CONFIG = require('../_no_commit/firebase-config.json');
     let FIREBASE_USERNAME = FIREBASE_CONFIG.USER.USERNAME;
     let FIREBASE_PASSWORD = FIREBASE_CONFIG.USER.PASSWORD;
+    firebase.initializeApp(FIREBASE_CONFIG.CONFIG);
     // log-in to firebase
     return firebase.auth().signInWithEmailAndPassword(FIREBASE_USERNAME, FIREBASE_PASSWORD)
       // fetch songs in playlist
