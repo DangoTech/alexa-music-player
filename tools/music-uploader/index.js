@@ -140,7 +140,8 @@
               { algorithm: 'md5' },
               (err, md5HashInHex) => {
                 var md5HashInBase64 = new Buffer(md5HashInHex, 'hex').toString('base64');
-                database.ref(`songs/${md5HashInBase64}`).once('value')
+                let songId = encodeSongId(md5HashInBase64);
+                database.ref(`songs/${songId}`).once('value')
                   .then(dataSnapshot => {
                     if (dataSnapshot.exists()) {
                       reject('Song already uploaded.');
@@ -222,7 +223,7 @@
       let songArtist = tags.artist;       
       let songName = tags.title;
       
-      let songId = encodeURIComponent(fileMetadata.md5Hash).replace(/\./g, '%2E');
+      let songId = encodeSongId(fileMetadata.md5Hash);
       let downloadUrl = fileMetadata.mediaLink;
 
       return database.ref(`songs/${songId}`).set(
@@ -264,6 +265,10 @@
       }).then(() => {
         return database.ref(`playlists/${playlistId}/displayName`).set(playlistName);
       });
+  }
+
+  function encodeSongId(md5Hash) {
+    return encodeURIComponent(md5Hash).replace(/\./g, '%2E');
   }
 
   function logSuccess(source, successMessage) {
