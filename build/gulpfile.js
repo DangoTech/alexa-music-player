@@ -78,22 +78,14 @@ gulp.task('zip', callback => {
     ['config_src'],
     ['node_modules'],
     ['jasmine'],
-    ['zipfile']);
-});
-
-gulp.task('deploy', callback => {
-  return runSequence(
-    ['upload'],
+    ['zipfile'],
     callback);
 });
 
-// gulp.task('deploy-production', callback => {
-//   BUILDMODE = 'production';
-//   BUILD_DIR = DIST_DIR + '_' + BUILDMODE;
-//   CONFIG_DIR = BASE_CONFIG_DIR + '/' + BUILDMODE;
-//   return runSequence(['zipfile'],
-//     ['upload'],
-//     callback);
-// });
+gulp.task('deploy', callback => {
+  return runSequence(['zip'],
+    ['upload'],
+    callback);
+});
 
 gulp.task('default', ['zip']);
