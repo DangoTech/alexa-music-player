@@ -11,6 +11,7 @@ module.exports = class AlexaService {
       /*audioUrl:*/ null,
       /*playBehavior:*/ null,
       /*token:*/ null,
+      /*offsetInMilliseconds*/ null,
       /*expectedPreviousToken:*/ null,
       /*shouldEndSession:*/ true,
       /*isStop:*/ false,
@@ -24,6 +25,7 @@ module.exports = class AlexaService {
     audioUrl,
     playBehavior,
     token,
+    offsetInMilliseconds,
     expectedPreviousToken,
     shouldEndSession,
     isStop,
@@ -36,6 +38,7 @@ module.exports = class AlexaService {
         audioUrl,
         playBehavior,
         token,
+        offsetInMilliseconds,
         expectedPreviousToken,
         shouldEndSession,
         isStop,
@@ -48,6 +51,7 @@ module.exports = class AlexaService {
     audioUrl,
     playBehavior,
     token,
+    offsetInMilliseconds,
     expectedPreviousToken,
     shouldEndSession,
     isStop,
@@ -85,7 +89,7 @@ module.exports = class AlexaService {
             stream: {
               token: token,
               url: audioUrl,
-              offsetInMilliseconds: 0
+              offsetInMilliseconds: offsetInMilliseconds
             }
           }
         }

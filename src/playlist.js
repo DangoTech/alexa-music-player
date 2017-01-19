@@ -2,34 +2,48 @@
 var AlexaService = require('./alexa-service');
 
 module.exports = class Playlist {
-  constructor(playlistId, currentIndex) {
+  constructor(playlistId, currentIndex, offsetInMilliseconds) {
     this.playlistId = playlistId;
-    this.currentIndex = currentIndex;
+    this.currentIndex = currentIndex != null ? currentIndex : -1;
+    this.offsetInMilliseconds = offsetInMilliseconds != null ? offsetInMilliseconds : 0;
   }
 
   playFirst(event, context) {
     this.currentIndex = 0;
+    this.offsetInMilliseconds = 0;
     this.buildAudioPlayerResponse(event, context, 0, true);
   }
 
   playPrevious(event, context) {
+    this.offsetInMilliseconds = 0;
     this.buildAudioPlayerResponse(event, context, -1, true);
   }
 
   playNext(event, context) {
+    this.offsetInMilliseconds = 0;
     this.buildAudioPlayerResponse(event, context, 1, true);
   }
 
+  resumePlay(event, context) {
+    if (this.currentIndex < 0) {
+      this.playFirst(event, context);
+    }
+    else {
+      this.buildAudioPlayerResponse(event, context, 0, true);
+    }
+  }
+
   queuePrevious(event, context) {
+    this.offsetInMilliseconds = 0;
     this.buildAudioPlayerResponse(event, context, -1, false);
   }
 
   queueNext(event, context) {
+    this.offsetInMilliseconds = 0;
     this.buildAudioPlayerResponse(event, context, 1, false);
   }
 
   buildAudioPlayerResponse(event, context, indexOffset, isPlayImmediately) {
-    console.log('queue');
     this.getSongDownloadUrls()
       .then((urls) => {
         if (urls[this.currentIndex + indexOffset]) {
@@ -41,6 +55,7 @@ module.exports = class Playlist {
             /*audioUrl:*/ urls[this.currentIndex],
             /*playBehavior:*/ isPlayImmediately ? 'REPLACE_ALL'  : 'ENQUEUE',
             /*token:*/ this.getTokenJson(),
+            /*offsetInMilliseconds*/ this.offsetInMilliseconds,
             /*expectedPreviousToken:*/ event.context.AudioPlayer.token,
             /*shouldEndSession:*/ true,
             /*isStop:*/ false,
@@ -53,6 +68,7 @@ module.exports = class Playlist {
             /*audioUrl:*/ null,
             /*playBehavior:*/ null,
             /*token:*/ this.getTokenJson(),
+            /*offsetInMilliseconds*/ this.offsetInMilliseconds,
             /*expectedPreviousToken:*/ null,
             /*shouldEndSession:*/ true,
             /*isStop:*/ false,
