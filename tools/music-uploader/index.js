@@ -2,49 +2,49 @@
   'use strict';
 
   /** constants **/
-  let FIREBASE_CONFIG = require('../../config/firebase-config.json');
+  let FIREBASE_CONFIG = require('./config/firebase-config.json');
   const FIREBASE_PROJECT_ID = FIREBASE_CONFIG.PROJECT_ID;
-  const FIREBASE_BUCKET_NAME = FIREBASE_CONFIG.BUCKET_NAME;   
+  const FIREBASE_BUCKET_NAME = FIREBASE_CONFIG.BUCKET_NAME;
   const FIREBASE_CONFIG_CONFIG = FIREBASE_CONFIG.CONFIG;
   const FIREBASE_SERVICE_ACCOUNT_JSON_FILENAME = FIREBASE_CONFIG.SERVICE_ACCOUNT_JSON_FILENAME;
   const FIREBASE_USER = FIREBASE_CONFIG.USER;
   const SUPPORTED_FILE_TYPES = [ 'mp3' ];
   const MUSIC_UPLOAD_ROOT_FOLDER = 'music';
-  
+
   /** module requires **/
   const firebase = require('firebase');
   const fs = require('fs');
   const gcs = require('@google-cloud/storage')({
     projectId: FIREBASE_PROJECT_ID,
-    keyFilename: `../../config/${FIREBASE_SERVICE_ACCOUNT_JSON_FILENAME}`
+    keyFilename: `./config/${FIREBASE_SERVICE_ACCOUNT_JSON_FILENAME}`
   });
   const id3Parser = require('id3-parser');
   const checksum = require('checksum');
-  
+
   /** global variables **/
   let database, bucket;
-  
+
   let uploadQueue = {
     numOfUploads: 0,
     numOfSongsAdded: 0,
     queueItems: []
   };
-      
-  function main() {       
+
+  function main() {
 
     initModules();
 
     signInUser().then(uploadMusic);
 
   }
-  
+
   function initModules() {
     bucket = gcs.bucket(FIREBASE_BUCKET_NAME);
-    
+
     firebase.initializeApp(FIREBASE_CONFIG_CONFIG);
     database = firebase.database();
   }
-  
+
   function signInUser() {
     return firebase.auth()
       .signInWithEmailAndPassword(
@@ -70,7 +70,7 @@
       }
     );
   }
-  
+
   function uploadMusic() {
     let rootChildren = fs.readdirSync(MUSIC_UPLOAD_ROOT_FOLDER);
     uploadQueue.queueItems.push({
@@ -78,24 +78,24 @@
       itemNames: rootChildren,
       parentFullPath: MUSIC_UPLOAD_ROOT_FOLDER,
       parentDirName: MUSIC_UPLOAD_ROOT_FOLDER
-    });     
+    });
     uploadItem(uploadQueue);
   }
-  
+
   function uploadItem(uploadQueue) {
-    let queueItem = uploadQueue.queueItems.length > 0 ? uploadQueue.queueItems[uploadQueue.queueItems.length - 1] : null;       
+    let queueItem = uploadQueue.queueItems.length > 0 ? uploadQueue.queueItems[uploadQueue.queueItems.length - 1] : null;
     if (queueItem == null){
       logSuccess('uploadItem', `Songs uploaded: ${uploadQueue.numOfUploads}, Songs added to database: ${uploadQueue.numOfSongsAdded}`);
       uploadQueue.numOfUploads = 0;
       uploadQueue.numOfSongsAdded = 0;
       return;
     }
-    
+
     let targetIndex = queueItem.targetIndex;
     let itemNames = queueItem.itemNames;
     let parentFullPath = queueItem.parentFullPath;
     let parentDirName = queueItem.parentDirName;
-    
+
     let uploadNextSiblingItem = (uploadQueue) => {
       if (uploadQueue.queueItems.length > 0) {
         let lastQueueItem = uploadQueue.queueItems[uploadQueue.queueItems.length - 1];
@@ -117,19 +117,19 @@
       uploadQueue.queueItems.pop();
       uploadNextSiblingItem(uploadQueue);
     };
-    
+
     if (targetIndex < itemNames.length) {
-        
+
       let targetItemName = itemNames[targetIndex];
       let targetItemFullPath = `${parentFullPath}/${targetItemName}`;
       let stats = fs.statSync(targetItemFullPath);
-      
+
       if (stats.isFile()) {
         let isSupportedFileType = false;
         SUPPORTED_FILE_TYPES.forEach(type => {
           isSupportedFileType = isSupportedFileType || targetItemFullPath.endsWith(`.${type}`);
         });
-        
+
         if (isSupportedFileType) {
           console.log(`Processing... ${targetItemFullPath}`);
 
@@ -152,7 +152,7 @@
                   });
               });
           })
-          // 2. Upload song 
+          // 2. Upload song
           .then(() => {
             return new Promise((resolve, reject) => {
               bucket.upload(
@@ -185,9 +185,9 @@
             let tags = tagsAndFile.tags;
             let file = tagsAndFile.file;
             return addSongToDatabase(
-              targetItemFullPath, 
-              file.metadata, 
-              tags, 
+              targetItemFullPath,
+              file.metadata,
+              tags,
               parentDirName)
               .then(() => {
                 uploadQueue.numOfSongsAdded++;
@@ -212,17 +212,17 @@
 
   function addSongToDatabase(songFilePath, fileMetadata, tags, playlistName) {
       console.log(`Adding to database... ${songFilePath}`);
-      
+
       let playlistId = playlistName.toLowerCase();
 
       let albumName = tags.album;
       let albumArtist = tags.band;
       let albumYear = tags.year;
       let albumId = encodeURI(`${albumName} | ${albumArtist}`);
-      
-      let songArtist = tags.artist;       
+
+      let songArtist = tags.artist;
       let songName = tags.title;
-      
+
       let songId = encodeSongId(fileMetadata.md5Hash);
       let downloadUrl = fileMetadata.mediaLink;
 
@@ -278,10 +278,10 @@
   function logError(source, errorCode, errorMessage) {
     console.log(`[ERROR in '${source}'] Code: ${errorCode} | Message: ${errorMessage}`);
   }
-  
+
   return {
     main: main
   };
-    
+
 })().main();
 
