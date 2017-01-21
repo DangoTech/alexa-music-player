@@ -10,16 +10,21 @@ const jasmine = require('gulp-jasmine');
 
 const BASE_DIR = '..';
 const SRC_DIR = BASE_DIR + '/src';
-const NO_COMMIT = '_no_commit';
-const NO_COMMIT_DIR = BASE_DIR + '/' + NO_COMMIT;
-const TEST = 'tests';
-const TEST_DIR = BASE_DIR + '/' + TEST;
+const CONFIG = 'config';
+const BASE_CONFIG_DIR = BASE_DIR + '/' + CONFIG;
+const TESTS = 'tests';
+const TESTS_DIR = BASE_DIR + '/' + TESTS;
 const DIST_DIR = 'dist';
-const ZIPFILE_NAME = 'dist.zip';
+const ZIPFILE_NAME = 'dist';
+const ZIPFILE_EXTENSION = '.zip';
 
 // BUILDMODE can change depending on parmeters
 let BUILDMODE = 'test';
 let BUILD_DIR = DIST_DIR + '_' + BUILDMODE;
+let CONFIG_DIR = BASE_CONFIG_DIR + '/' + BUILDMODE;
+let BUILD_CONFIG_DIR = BUILD_DIR + '/config';
+let ZIP_NAME = ZIPFILE_NAME + '_' + BUILDMODE + ZIPFILE_EXTENSION;
+
 
 gulp.task('clean', () => {
   return del(['dist*/'], {force: true});
@@ -28,11 +33,15 @@ gulp.task('clean', () => {
 gulp.task('src', () => {
   return gulp.src([BASE_DIR + '/index.js',
       SRC_DIR + '/**/*.js',
-      NO_COMMIT_DIR + '/**/*.js*',
-      TEST_DIR + '/**/*.js',
+      TESTS_DIR + '/**/*.js',
       '!' + SRC_DIR + '/interaction-model/**'],
       { base : BASE_DIR} )
     .pipe(gulp.dest(BUILD_DIR));
+});
+
+gulp.task('config_src', () => {
+  return gulp.src([CONFIG_DIR + '/*.json'])
+    .pipe(gulp.dest(BUILD_CONFIG_DIR));
 });
 
 gulp.task('node_modules', () => {
@@ -42,53 +51,49 @@ gulp.task('node_modules', () => {
 });
 
 gulp.task('jasmine', (callback) => {
-  return gulp.src([BUILD_DIR + '/' + TEST + '/**/*.js'])
+  return gulp.src([BUILD_DIR + '/' + TESTS + '/**/*.js'])
     .pipe(jasmine());
 });
 
-gulp.task('zip', function() {
+gulp.task('zipfile', function() {
   return gulp.src([
       BUILD_DIR + '/**/*',
       '!' + BUILD_DIR + '/package.json',
-      '!' + BUILD_DIR + '/' + TEST + '/**/*'],
+      '!' + BUILD_DIR + '/' + TESTS + '/**/*'],
       { nodir : true } // a workaround for deploying to lambda from windows
       // https://github.com/sindresorhus/gulp-zip/issues/64
     )
-    .pipe(zip(ZIPFILE_NAME))
+    .pipe(zip(ZIP_NAME))
     .pipe(gulp.dest(BUILD_DIR));
 });
 
-gulp.task('upload-test', function(callback) {
-  let LAMBDA_CONFIG = require(NO_COMMIT_DIR + '/lambda-config.json');
-  LAMBDA_CONFIG.functionName = LAMBDA_CONFIG.functionName + 'Test';
-  awsLambda.deploy(BUILD_DIR + '/' + ZIPFILE_NAME, LAMBDA_CONFIG , callback);
+gulp.task('upload', function(callback) {
+  let LAMBDA_CONFIG = require(CONFIG_DIR + '/lambda-config.json');
+  awsLambda.deploy(BUILD_DIR + '/' + ZIP_NAME, LAMBDA_CONFIG , callback);
 });
 
-gulp.task('upload-production', function(callback) {
-  let LAMBDA_CONFIG = require(NO_COMMIT_DIR + '/lambda-config.json');
-  awsLambda.deploy(BUILD_DIR + '/' + ZIPFILE_NAME, LAMBDA_CONFIG, callback);
-});
-
-gulp.task('deploy-test', callback => {
+gulp.task('zip', callback => {
   return runSequence(['clean'],
     ['src'],
+    ['config_src'],
     ['node_modules'],
     ['jasmine'],
-    ['zip'],
-    ['upload-test'],
+    ['zipfile']);
+});
+
+gulp.task('deploy', callback => {
+  return runSequence(
+    ['upload'],
     callback);
 });
 
-gulp.task('deploy-production', callback => {
-  BUILDMODE = 'production';
-  BUILD_DIR = DIST_DIR + '_' + BUILDMODE;
-  return runSequence(['clean'],
-    ['src'],
-    ['node_modules'],
-    ['jasmine'],
-    ['zip'],
-    ['upload-production'],
-    callback);
-});
+// gulp.task('deploy-production', callback => {
+//   BUILDMODE = 'production';
+//   BUILD_DIR = DIST_DIR + '_' + BUILDMODE;
+//   CONFIG_DIR = BASE_CONFIG_DIR + '/' + BUILDMODE;
+//   return runSequence(['zipfile'],
+//     ['upload'],
+//     callback);
+// });
 
-gulp.task('default', ['deploy-test']);
+gulp.task('default', ['zip']);

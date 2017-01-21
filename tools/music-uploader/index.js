@@ -2,7 +2,7 @@
   'use strict';
 
   /** constants **/
-  let FIREBASE_CONFIG = require('../../_no_commit/firebase-config');
+  let FIREBASE_CONFIG = require('../../config/firebase-config.json');
   const FIREBASE_PROJECT_ID = FIREBASE_CONFIG.PROJECT_ID;
   const FIREBASE_BUCKET_NAME = FIREBASE_CONFIG.BUCKET_NAME;   
   const FIREBASE_CONFIG_CONFIG = FIREBASE_CONFIG.CONFIG;
@@ -16,7 +16,7 @@
   const fs = require('fs');
   const gcs = require('@google-cloud/storage')({
     projectId: FIREBASE_PROJECT_ID,
-    keyFilename: `../../_no_commit/${FIREBASE_SERVICE_ACCOUNT_JSON_FILENAME}`
+    keyFilename: `../../config/${FIREBASE_SERVICE_ACCOUNT_JSON_FILENAME}`
   });
   const id3Parser = require('id3-parser');
   const checksum = require('checksum');

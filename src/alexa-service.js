@@ -1,5 +1,5 @@
 'use strict';
-let ALEXA_CONFIG = require('../_no_commit/alexa-config.json');
+let ALEXA_CONFIG = require('../config/alexa-config.json');
 let ALEXA_SKILL_NAME = ALEXA_CONFIG.NAME;
 
 module.exports = class AlexaService {

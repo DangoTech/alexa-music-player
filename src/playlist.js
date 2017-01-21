@@ -81,7 +81,7 @@ module.exports = class Playlist {
     let songIds;
     let downloadUrls;
     let firebase = require('firebase');
-    let FIREBASE_CONFIG = require('../_no_commit/firebase-config.json');
+    let FIREBASE_CONFIG = require('../config/firebase-config.json');
     let FIREBASE_USERNAME = FIREBASE_CONFIG.USER.USERNAME;
     let FIREBASE_PASSWORD = FIREBASE_CONFIG.USER.PASSWORD;
     try {

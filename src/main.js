@@ -5,10 +5,10 @@ var fs = require('fs');
 var Playlist = require('./playlist');
 var AlexaService = require('./alexa-service');
 
-let ALEXA_CONFIG = require('../_no_commit/alexa-config.json');
+let ALEXA_CONFIG = require('../config/alexa-config.json');
 let ALEXA_SKILL_NAME = ALEXA_CONFIG.NAME;
 
-let FIREBASE_CONFIG = require('../_no_commit/firebase-config.json');
+let FIREBASE_CONFIG = require('../config/firebase-config.json');
 let FIREBASE_CONFIG_CONFIG = FIREBASE_CONFIG.CONFIG;
 
 const DEFAULT_PLAYLIST_ID = 'tangled';
