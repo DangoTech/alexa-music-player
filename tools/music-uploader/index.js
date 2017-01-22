@@ -11,6 +11,7 @@
   const SUPPORTED_FILE_TYPES = [ 'mp3' ];
   const MUSIC_SOURCE_ROOT_FOLDER = process.argv[2];
   const MUSIC_DEST_ROOT_FOLDER = 'music';
+  const DEFAULT_PLAYLIST = 'music';
 
   /** module requires **/
   const firebase = require('firebase');
@@ -78,7 +79,7 @@
       targetIndex: 0,
       itemNames: rootChildren,
       parentSubPath: null,
-      parentDirName: 'music'
+      parentDirName: DEFAULT_PLAYLIST
     });
     uploadItem(uploadQueue);
   }
