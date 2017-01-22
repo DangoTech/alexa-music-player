@@ -9,7 +9,8 @@
   const FIREBASE_SERVICE_ACCOUNT_JSON_FILENAME = FIREBASE_CONFIG.SERVICE_ACCOUNT_JSON_FILENAME;
   const FIREBASE_USER = FIREBASE_CONFIG.USER;
   const SUPPORTED_FILE_TYPES = [ 'mp3' ];
-  const MUSIC_UPLOAD_ROOT_FOLDER = 'music';
+  const MUSIC_SOURCE_ROOT_FOLDER = process.argv[2];
+  const MUSIC_DEST_ROOT_FOLDER = 'music';
 
   /** module requires **/
   const firebase = require('firebase');
@@ -72,12 +73,12 @@
   }
 
   function uploadMusic() {
-    let rootChildren = fs.readdirSync(MUSIC_UPLOAD_ROOT_FOLDER);
+    let rootChildren = fs.readdirSync(MUSIC_SOURCE_ROOT_FOLDER);
     uploadQueue.queueItems.push({
       targetIndex: 0,
       itemNames: rootChildren,
-      parentFullPath: MUSIC_UPLOAD_ROOT_FOLDER,
-      parentDirName: MUSIC_UPLOAD_ROOT_FOLDER
+      parentSubPath: null,
+      parentDirName: 'music'
     });
     uploadItem(uploadQueue);
   }
@@ -93,7 +94,9 @@
 
     let targetIndex = queueItem.targetIndex;
     let itemNames = queueItem.itemNames;
-    let parentFullPath = queueItem.parentFullPath;
+    let parentSubPath = queueItem.parentSubPath;
+    let parentLocalFullPath = `${MUSIC_SOURCE_ROOT_FOLDER}${parentSubPath ? '/'+parentSubPath : ''}`;
+    let parentUploadFullPath = `${MUSIC_DEST_ROOT_FOLDER}${parentSubPath ? '/'+parentSubPath : ''}`;
     let parentDirName = queueItem.parentDirName;
 
     let uploadNextSiblingItem = (uploadQueue) => {
@@ -103,12 +106,13 @@
       }
       uploadItem(uploadQueue);
     };
-    let uploadFirstChildItem = (uploadQueue, targetItemFullPath, targetItemName) => {
-      let childrenItemNames = fs.readdirSync(targetItemFullPath);
+    let uploadFirstChildItem = (uploadQueue, targetItemSubPath, targetItemName) => {
+      let targetItemLocalFullPath = `${MUSIC_SOURCE_ROOT_FOLDER}/${targetItemSubPath}`;
+      let childrenItemNames = fs.readdirSync(targetItemLocalFullPath);
       uploadQueue.queueItems.push({
         targetIndex: 0,
         itemNames: childrenItemNames,
-        parentFullPath: targetItemFullPath,
+        parentSubPath: targetItemSubPath,
         parentDirName: targetItemName
       });
       uploadItem(uploadQueue);
@@ -121,22 +125,24 @@
     if (targetIndex < itemNames.length) {
 
       let targetItemName = itemNames[targetIndex];
-      let targetItemFullPath = `${parentFullPath}/${targetItemName}`;
-      let stats = fs.statSync(targetItemFullPath);
+      let targetItemSubPath = `${parentSubPath ? parentSubPath+'/' : ''}${targetItemName}`;
+      let targetItemLocalFullPath = `${parentLocalFullPath}/${targetItemName}`;
+      let targetItemUploadFullPath = `${parentUploadFullPath}/${targetItemName}`;
+      let stats = fs.statSync(targetItemLocalFullPath);
 
       if (stats.isFile()) {
         let isSupportedFileType = false;
         SUPPORTED_FILE_TYPES.forEach(type => {
-          isSupportedFileType = isSupportedFileType || targetItemFullPath.endsWith(`.${type}`);
+          isSupportedFileType = isSupportedFileType || targetItemLocalFullPath.endsWith(`.${type}`);
         });
 
         if (isSupportedFileType) {
-          console.log(`Processing... ${targetItemFullPath}`);
+          console.log(`Processing... ${targetItemSubPath}`);
 
           // 1. Check if existing song has the same md5 hash in base64
           new Promise((resolve, reject) => {
             checksum.file(
-              targetItemFullPath,
+              targetItemLocalFullPath,
               { algorithm: 'md5' },
               (err, md5HashInHex) => {
                 var md5HashInBase64 = new Buffer(md5HashInHex, 'hex').toString('base64');
@@ -155,10 +161,11 @@
           // 2. Upload song
           .then(() => {
             return new Promise((resolve, reject) => {
+              console.log(`dest = ${targetItemUploadFullPath}`);
               bucket.upload(
-                targetItemFullPath,
+                targetItemLocalFullPath,
                 {
-                  destination: targetItemFullPath,
+                  destination: targetItemUploadFullPath,
                   public: true
                 },
                 (err, file, apiResponse) => {
@@ -174,7 +181,7 @@
           })
           // 3. Parse out the ID3 tags from song file
           .then(file => {
-            return id3Parser.parse(fs.readFileSync(targetItemFullPath))
+            return id3Parser.parse(fs.readFileSync(targetItemLocalFullPath))
               .then(tags => Promise.resolve({
                 tags: tags,
                 file: file
@@ -185,7 +192,7 @@
             let tags = tagsAndFile.tags;
             let file = tagsAndFile.file;
             return addSongToDatabase(
-              targetItemFullPath,
+              targetItemUploadFullPath,
               file.metadata,
               tags,
               parentDirName)
@@ -201,7 +208,7 @@
           uploadNextSiblingItem(uploadQueue);
         }
       } else if (stats.isDirectory()) {
-        uploadFirstChildItem(uploadQueue, targetItemFullPath, targetItemName);
+        uploadFirstChildItem(uploadQueue, targetItemSubPath, targetItemName);
       } else {
         uploadNextSiblingItem(uploadQueue);
       }
@@ -212,11 +219,10 @@
 
   function addSongToDatabase(songFilePath, fileMetadata, tags, playlistName) {
       console.log(`Adding to database... ${songFilePath}`);
-
       let playlistId = playlistName.toLowerCase();
 
       let albumName = tags.album;
-      let albumArtist = tags.band;
+      let albumArtist = tags.band != null && tags.band.length > 0 ? tags.band : tags.artist;
       let albumYear = tags.year;
       let albumId = encodeURI(`${albumName} | ${albumArtist}`);
 

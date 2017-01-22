@@ -24,7 +24,8 @@ gulp.task('src', () => {
 });
 
 gulp.task('config_src', () => {
-  return gulp.src([CONFIG_DIR + '/firebase-config.json'])
+  return gulp.src([CONFIG_DIR + '/firebase-config.json',
+    CONFIG_DIR + '/music-player*.json'])
     .pipe(gulp.dest(BUILD_CONFIG_DIR));
 });
 
