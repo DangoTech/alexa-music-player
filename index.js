@@ -12,12 +12,13 @@ exports.handler = function (event, context, callback) {
       console.log(`>> EVENT: ${JSON.stringify(event)}`);
   }
 
-  let appId = event.session
-      && event.session.application
-      ? event.session.application.applicationId
+  let appId = event.context
+      && event.context.System
+      && event.context.System.application
+      ? event.context.System.application.applicationId
       : null;
   if (appId !== ALEXA_SKILL_ID) {
-    context.fail(`ERROR: Invalid Application ID: Expecting ${"ALEXA_SKILL_ID"} but received ${appId}`);
+    context.fail(`ERROR: Invalid Application ID: Expecting ${ALEXA_SKILL_ID} but received ${appId}`);
   }
   else {
     var main = require('src/main');
