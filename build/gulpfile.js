@@ -7,6 +7,7 @@ const install = require('gulp-install');
 const runSequence = require('run-sequence');
 const awsLambda = require('node-aws-lambda');
 const jasmine = require('gulp-jasmine');
+const argv = require('yargs').argv;
 
 const BASE_DIR = '..';
 const SRC_DIR = BASE_DIR + '/src';
@@ -18,13 +19,13 @@ const DIST_DIR = 'dist';
 const ZIPFILE_NAME = 'dist';
 const ZIPFILE_EXTENSION = '.zip';
 
-// BUILDMODE can change depending on parmeters
-let BUILDMODE = 'test';
-let BUILD_DIR = DIST_DIR + '_' + BUILDMODE;
-let CONFIG_DIR = BASE_CONFIG_DIR + '/' + BUILDMODE;
-let BUILD_CONFIG_DIR = BUILD_DIR + '/config';
-let ZIP_NAME = ZIPFILE_NAME + '_' + BUILDMODE + ZIPFILE_EXTENSION;
+const BUILDMODE = argv.production ? 'production' : 'test';
+const BUILD_DIR = DIST_DIR + '_' + BUILDMODE;
+const CONFIG_DIR = BASE_CONFIG_DIR + '/' + BUILDMODE;
+const BUILD_CONFIG_DIR = BUILD_DIR + '/config';
+const ZIP_NAME = ZIPFILE_NAME + '_' + BUILDMODE + ZIPFILE_EXTENSION;
 
+console.log('\n\n\n*********\nBuilding ' + BUILDMODE + '\n*********\n');
 
 gulp.task('clean', () => {
   return del(['dist*/'], {force: true});

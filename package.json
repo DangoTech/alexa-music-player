@@ -4,7 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "zip": "cd ./build && gulp",
+    "zip-production" : "cd ./build && gulp --production",
+    "deploy": "cd ./build && gulp deploy",
+    "deploy-production": "cd ./build && gulp deploy --production"
   },
   "author": "",
   "license": "ISC",

@@ -16,7 +16,8 @@
     "gulp-zip": "^3.2.0",
     "jasmine": "^2.5.3",
     "node-aws-lambda": "^0.1.8",
-    "run-sequence": "^1.2.2"
+    "run-sequence": "^1.2.2",
+    "yargs": "^6.6.0"
   },
   "jshintConfig": {
     "esversion": 6,
