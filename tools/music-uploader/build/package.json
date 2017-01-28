@@ -11,7 +11,8 @@
   "dependencies": {
     "del": "^2.2.2",
     "gulp": "^3.9.1",
-    "run-sequence": "^1.2.2"
+    "run-sequence": "^1.2.2",
+    "yargs": "^6.6.0"
   },
   "jshintConfig": {
     "esversion": 6,

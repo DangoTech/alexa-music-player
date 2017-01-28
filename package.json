@@ -7,7 +7,9 @@
     "zip": "cd ./build && gulp",
     "zip-production" : "cd ./build && gulp --production",
     "deploy": "cd ./build && gulp deploy",
-    "deploy-production": "cd ./build && gulp deploy --production"
+    "deploy-production": "cd ./build && gulp deploy --production",
+    "upload": "cd ./tools/music-uploader/build && gulp",
+    "upload-production": "cd ./tools/music-uploader/build && gulp --production"
   },
   "author": "",
   "license": "ISC",
