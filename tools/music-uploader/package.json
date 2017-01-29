@@ -12,7 +12,6 @@
     "@google-cloud/storage": "^0.6.0",
     "checksum": "^0.1.1",
     "firebase": "^3.6.4",
-    "gcloud": "^0.37.0",
     "id3-parser": "^1.1.1"
   },
   "jshintConfig": {

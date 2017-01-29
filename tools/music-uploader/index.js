@@ -8,7 +8,7 @@
   const FIREBASE_CONFIG_CONFIG = FIREBASE_CONFIG.CONFIG;
   const FIREBASE_SERVICE_ACCOUNT_JSON_FILENAME = FIREBASE_CONFIG.SERVICE_ACCOUNT_JSON_FILENAME;
   const FIREBASE_USER = FIREBASE_CONFIG.USER;
-  const SUPPORTED_FILE_TYPES = [ 'mp3' ];
+  const SUPPORTED_FILE_TYPES = [ 'mp3', 'm4a' ];
   const MUSIC_SOURCE_ROOT_FOLDER = process.argv[2];
   const MUSIC_DEST_ROOT_FOLDER = 'music';
   const DEFAULT_PLAYLIST = 'music';
@@ -138,7 +138,7 @@
         });
 
         if (isSupportedFileType) {
-          console.log(`Processing... ${targetItemSubPath}`);
+          console.log(`Processing ..... ${targetItemSubPath}`);
 
           // 1. Check if existing song has the same md5 hash in base64
           new Promise((resolve, reject) => {
@@ -162,7 +162,6 @@
           // 2. Upload song
           .then(() => {
             return new Promise((resolve, reject) => {
-              console.log(`dest = ${targetItemUploadFullPath}`);
               bucket.upload(
                 targetItemLocalFullPath,
                 {
@@ -219,58 +218,91 @@
   }
 
   function addSongToDatabase(songFilePath, fileMetadata, tags, playlistName) {
-      console.log(`Adding to database... ${songFilePath}`);
-      let playlistId = playlistName.toLowerCase();
+    console.log(`Adding to database ..... ${songFilePath}`);
+    let albumName = tags.album;
+    let albumArtist = tags.band != null && tags.band.length > 0 ? tags.band : tags.artist;
+    let albumYear = tags.year;
 
-      let albumName = tags.album;
-      let albumArtist = tags.band != null && tags.band.length > 0 ? tags.band : tags.artist;
-      let albumYear = tags.year;
-      let albumId = encodeURI(`${albumName} | ${albumArtist}`);
+    let songArtist = tags.artist;
+    let songName = tags.title;
 
-      let songArtist = tags.artist;
-      let songName = tags.title;
+    let songId = encodeSongId(fileMetadata.md5Hash);
+    let downloadUrl = fileMetadata.mediaLink;
 
-      let songId = encodeSongId(fileMetadata.md5Hash);
-      let downloadUrl = fileMetadata.mediaLink;
+    let albumsRef = database.ref('albums');
+    let playlistsRef = database.ref('playlists');
+    let songsRef = database.ref('songs');
 
-      return database.ref(`songs/${songId}`).set(
-        {
-          downloadUrl: downloadUrl
-        }
-      ).then(() => {
-        return database.ref(`songProperties/${songId}`).set(
-          {
-            album: albumId,
-            artist: songArtist,
-            filePath: songFilePath,
-            songName: songName
-          }
-        );
-      }).then(() => {
-        return database.ref(`albums/${albumId}`).once('value');
-      }).then(dataSnapshot => {
-        if (!dataSnapshot.exists()) {
-          return database.ref(`albums/${albumId}`).set(
+    // 1. Get existing album reference or create new album reference if none exists by the name
+    return albumsRef.orderByChild('name').equalTo(albumName).once('value')
+      .then(matchingAlbumsDS => {
+        if (matchingAlbumsDS.numChildren() <= 0) {
+          return albumsRef.push(
             {
               artist: albumArtist,
               name: albumName,
               year: albumYear
             });
+        } else {
+          let matchingAlbums = matchingAlbumsDS.val();
+          let albumId = Object.keys(matchingAlbums)[0];
+          return albumsRef.child(albumId);
         }
-      }).then(() => {
-        return database.ref(`playlists/${playlistId}/songs`).orderByChild('order').limitToLast(1).once('value');
-      }).then(dataSnapshot => {
-        let lastSong = dataSnapshot.val();
-        let lastSongOrder = -1;
-        if (lastSong != null) {
-          lastSongOrder = Number.parseInt(lastSong[Object.keys(lastSong)[0]].order);
-        }
-        return database.ref(`playlists/${playlistId}/songs`).push({
-          songId: songId,
-          order: lastSongOrder + 1
-        });
-      }).then(() => {
-        return database.ref(`playlists/${playlistId}/displayName`).set(playlistName);
+      })
+      // 2. Create song and link to album from step 1
+      .then(albumRef => {
+        return songsRef.child(`${songId}`).set(
+          {
+            songName: songName,
+            artist: songArtist || albumArtist,
+            album: albumRef.key,
+            filePath: songFilePath,
+            downloadUrl: downloadUrl
+          })
+          .then(() => {
+            return albumsRef.child(`${albumRef.key}/songs`).orderByChild('order').limitToLast(1).once('value')
+              .then(lastSongDS => {
+                let lastSong = lastSongDS.val();
+                let lastSongOrder = -1;
+                if (lastSong != null) {
+                  lastSongOrder = Number.parseInt(lastSong[Object.keys(lastSong)[0]].order);
+                }
+                return albumsRef.child(`${albumRef.key}/songs`).push({
+                  songId: songId,
+                  order: lastSongOrder + 1
+                });
+              });
+          });
+      })
+      // 3. Get existing playlist reference or create new playlist reference if none exists by the name
+      .then(() => {
+        return playlistsRef.orderByChild('displayName').equalTo(playlistName).once('value')
+          .then(matchingPlaylistsDS => {
+            if (matchingPlaylistsDS.numChildren() <= 0) {
+              return playlistsRef.push({
+                displayName: playlistName
+              });
+            } else {
+              let matchingPlaylists = matchingPlaylistsDS.val();
+              let playlistId = Object.keys(matchingPlaylists)[0];
+              return playlistsRef.child(playlistId);
+            }
+          });        
+      })
+      // 4. Add song to the end of the playlist from step 3
+      .then(playlistRef => {
+        return playlistsRef.child(`${playlistRef.key}/songs`).orderByChild('order').limitToLast(1).once('value')
+          .then(lastSongDS => {
+            let lastSong = lastSongDS.val();
+            let lastSongOrder = -1;
+            if (lastSong != null) {
+              lastSongOrder = Number.parseInt(lastSong[Object.keys(lastSong)[0]].order);
+            }
+            return playlistsRef.child(`${playlistRef.key}/songs`).push({
+              songId: songId,
+              order: lastSongOrder + 1
+            });
+          });
       });
   }
 
