@@ -169,14 +169,60 @@ function onPlay(event, context, callback) {
 }
 
 function onPlayPlaylist(event, context, callback) {
-  let playlistId = event.request.intent.slots.PlaylistId.value;
-    if (playlistId) {
-      let playlist = new Playlist(playlistId, -1, 0);
-      console.log(playlist);
-      playlist.playFirst(event, context);
+  let playlistNameSlotValue = event.request.intent.slots.PlaylistName.value;
+
+    if (playlistNameSlotValue) {
+      
+      let firebase = require('firebase');
+      let FIREBASE_CONFIG = require('../config/firebase-config.json');
+      let FIREBASE_USERNAME = FIREBASE_CONFIG.USER.USERNAME;
+      let FIREBASE_PASSWORD = FIREBASE_CONFIG.USER.PASSWORD;
+      try {
+        firebase.initializeApp(FIREBASE_CONFIG.CONFIG);
+      }
+      catch (e) {}
+
+      // log-in to firebase
+      firebase.auth().signInWithEmailAndPassword(FIREBASE_USERNAME, FIREBASE_PASSWORD)
+        // fetch songs in playlist
+        .then(() => firebase.database().ref(`playlists`).once('value'))
+        // fetch all playlists
+        .then(playlistsDS => {
+          let matchingPlaylistId = null;
+          
+          // iterate through list of playlists and find one that matches the playlist name slot value
+          playlistsDS.forEach(playlistDS => {
+            console.log(JSON.stringify(playlistDS.val()));
+            if (matchingPlaylistId === null) {
+              let displayName = playlistDS.val().displayName;
+              displayName = displayName.replace(/[^0-9a-z ]/gi, '') // remove non-alphanumeric characters
+                .replace(/ +/g, " ") // convert all multispaces to single space
+                .replace(/^ /g, "")  // remove spaces from the start
+                .replace(/ $/g, ""); // remove spaces from the end
+              playlistNameSlotValue = playlistNameSlotValue.replace(/[^0-9a-z ]/gi, '') // remove non-alphanumeric characters
+                .replace(/ +/g, " ") // convert all multispaces to single space
+                .replace(/^ /g, "")  // remove spaces from the start
+                .replace(/ $/g, ""); // remove spaces from the end
+
+              let regex = new RegExp(`\\b${playlistNameSlotValue}\\b`, 'gi');
+              if (displayName.match(regex)) {
+                matchingPlaylistId = playlistDS.key;
+              }
+            }
+          });
+
+          // if matching playlist found, play the playlist, else end the session
+          if (matchingPlaylistId != null) {
+            let playlist = new Playlist(matchingPlaylistId, -1, 0);
+            playlist.playFirst(event, context);
+          }
+          else {
+            AlexaService.respondWithEndSession(context);
+          }
+        });     
     }
     else {
-      AlexaService.respondWithEndSession(event, context, callback);
+      AlexaService.respondWithEndSession(context);
     }
 }
 
