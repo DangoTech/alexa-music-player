@@ -12,7 +12,7 @@
     "@google-cloud/storage": "^0.6.0",
     "checksum": "^0.1.1",
     "firebase": "^3.6.4",
-    "id3-parser": "^1.1.1"
+    "musicmetadata": "^2.0.5"
   },
   "jshintConfig": {
     "esversion": 6,

@@ -21,7 +21,7 @@
     projectId: FIREBASE_PROJECT_ID,
     keyFilename: `./config/${FIREBASE_SERVICE_ACCOUNT_JSON_FILENAME}`
   });
-  const id3Parser = require('id3-parser');
+  const musicmetadata = require('musicmetadata');
   const checksum = require('checksum');
 
   /** global variables **/
@@ -196,13 +196,27 @@
                 });
             });
           })
-          // 3. Parse out the ID3 tags from song file
+          // 3. Parse out the metadata from song file
           .then(file => {
-            return id3Parser.parse(fs.readFileSync(targetItemLocalFullPath))
-              .then(tags => Promise.resolve({
-                tags: tags,
-                file: file
-              }));
+            return new Promise((resolve, reject) => {
+              var readableStream = fs.createReadStream(targetItemLocalFullPath);
+
+              musicmetadata(
+                readableStream,
+                (err, metadata) => {
+                  if (err){
+                    reject(err);
+                  }
+                  else {
+                    resolve({
+                      tags: metadata,
+                      file: file
+                    });
+                  }                  
+                  readableStream.close();
+                });
+
+            });
           })
           // 4. Add song record to database
           .then(tagsAndFile => {
@@ -236,12 +250,12 @@
 
   function addSongToDatabase(songFilePath, fileMetadata, tags, playlistName) {
     console.log(`Adding to database ..... ${songFilePath}`);
-    let albumName = tags.album;
-    let albumArtist = tags.band != null && tags.band.length > 0 ? tags.band : tags.artist;
-    let albumYear = tags.year;
 
-    let songArtist = tags.artist;
-    let songName = tags.title;
+    let songArtist = tags.artist != null && tags.artist.length > 0 && tags.artist[0] ? tags.artist[0].trim() : '';
+    let albumName = tags.album ? tags.album.trim() : '';
+    let albumArtist = tags.albumartist != null && tags.albumartist.length > 0 && tags.albumartist[0] ? tags.albumartist[0].trim() : songArtist;
+    let albumYear = tags.year;
+    let songName = tags.title ? tags.title.trim() : '';
 
     let songId = encodeSongId(fileMetadata.md5Hash);
     let downloadUrl = fileMetadata.mediaLink;
