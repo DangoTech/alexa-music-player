@@ -16,7 +16,7 @@ const BUILD_CONFIG_DIR = BUILD_DIR + '/' + CONFIG;
 const CONFIG_DIR = PROJECT_DIR + '/' + CONFIG + '/' + BUILDMODE;
 
 gulp.task('clean', () => {
-  return del([BUILD_FOLDER + '*/'], {force: true});
+  return del([BUILD_DIR], {force: true});
 });
 
 gulp.task('src', () => {

@@ -25,10 +25,11 @@ const CONFIG_DIR = BASE_CONFIG_DIR + '/' + BUILDMODE;
 const BUILD_CONFIG_DIR = BUILD_DIR + '/config';
 const ZIP_NAME = ZIPFILE_NAME + '_' + BUILDMODE + ZIPFILE_EXTENSION;
 
+
 console.log('\n\n\n*********\nBuilding ' + BUILDMODE + '\n*********\n');
 
 gulp.task('clean', () => {
-  return del(['dist*/'], {force: true});
+  return del([BUILD_DIR], {force: true});
 });
 
 gulp.task('src', () => {
