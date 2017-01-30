@@ -114,7 +114,7 @@
     let itemNames = queueItem.itemNames;
     let parentSubPath = queueItem.parentSubPath;
     let parentLocalFullPath = `${musicSourceRootFolder}${parentSubPath ? '/'+parentSubPath : ''}`;
-    let parentUploadFullPath = `${musicSourceRootFolder}${parentSubPath ? '/'+parentSubPath : ''}`;
+    let parentUploadFullPath = `${MUSIC_DEST_ROOT_FOLDER}${parentSubPath ? '/'+parentSubPath : ''}`;
     let parentDirName = queueItem.parentDirName;
 
     let uploadNextSiblingItem = (uploadQueue) => {
