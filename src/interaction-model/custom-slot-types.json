@@ -1,7 +1,8 @@
 {
   "slotTypes": {
-    "LIST_OF_PLAYLIST_IDS": {
-      "tangled"
-    }
+    "LIST_OF_PLAYLIST_NAMES": [
+      "The Sound of Music - Original Soundtrack",
+      "Beauty and the Beast - The Broadway Musical"
+    ]
   }
 }

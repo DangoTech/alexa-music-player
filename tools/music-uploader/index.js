@@ -9,9 +9,10 @@
   const FIREBASE_SERVICE_ACCOUNT_JSON_FILENAME = FIREBASE_CONFIG.SERVICE_ACCOUNT_JSON_FILENAME;
   const FIREBASE_USER = FIREBASE_CONFIG.USER;
   const SUPPORTED_FILE_TYPES = [ 'mp3', 'm4a' ];
-  const MUSIC_SOURCE_ROOT_FOLDER = process.argv[2];
   const MUSIC_DEST_ROOT_FOLDER = 'music';
   const DEFAULT_PLAYLIST = 'music';
+
+  let musicSourceRootFolder = process.argv[2];
 
   /** module requires **/
   const firebase = require('firebase');
@@ -74,12 +75,17 @@
   }
 
   function uploadMusic() {
-    let rootChildren = fs.readdirSync(MUSIC_SOURCE_ROOT_FOLDER);
+    let rootChildren = fs.readdirSync(musicSourceRootFolder);
+    rootChildren.sort();
+
+    // split music source folder path into two halves by the last '/' or '\' character
+    let parentDir = musicSourceRootFolder.match(/[^/\\\\]+$/);
+    musicSourceRootFolder = musicSourceRootFolder.substr(0, musicSourceRootFolder.length - parentDir[0].length - 1);
     uploadQueue.queueItems.push({
       targetIndex: 0,
       itemNames: rootChildren,
-      parentSubPath: null,
-      parentDirName: DEFAULT_PLAYLIST
+      parentSubPath: parentDir[0],
+      parentDirName: parentDir[0]
     });
     uploadItem(uploadQueue);
   }
@@ -90,14 +96,25 @@
       logSuccess('uploadItem', `Songs uploaded: ${uploadQueue.numOfUploads}, Songs added to database: ${uploadQueue.numOfSongsAdded}`);
       uploadQueue.numOfUploads = 0;
       uploadQueue.numOfSongsAdded = 0;
+
+      console.log('====== All Playlists ======');
+      let playlistsRef = database.ref('playlists');
+      playlistsRef.once('value')
+        .then(playlistsDS => {
+          playlistsDS.forEach(playlistDS => {
+            console.log(playlistDS.val().displayName);
+          });
+          console.log('=========== end ===========');
+        });
+
       return;
     }
 
     let targetIndex = queueItem.targetIndex;
     let itemNames = queueItem.itemNames;
     let parentSubPath = queueItem.parentSubPath;
-    let parentLocalFullPath = `${MUSIC_SOURCE_ROOT_FOLDER}${parentSubPath ? '/'+parentSubPath : ''}`;
-    let parentUploadFullPath = `${MUSIC_DEST_ROOT_FOLDER}${parentSubPath ? '/'+parentSubPath : ''}`;
+    let parentLocalFullPath = `${musicSourceRootFolder}${parentSubPath ? '/'+parentSubPath : ''}`;
+    let parentUploadFullPath = `${musicSourceRootFolder}${parentSubPath ? '/'+parentSubPath : ''}`;
     let parentDirName = queueItem.parentDirName;
 
     let uploadNextSiblingItem = (uploadQueue) => {
@@ -108,7 +125,7 @@
       uploadItem(uploadQueue);
     };
     let uploadFirstChildItem = (uploadQueue, targetItemSubPath, targetItemName) => {
-      let targetItemLocalFullPath = `${MUSIC_SOURCE_ROOT_FOLDER}/${targetItemSubPath}`;
+      let targetItemLocalFullPath = `${musicSourceRootFolder}/${targetItemSubPath}`;
       let childrenItemNames = fs.readdirSync(targetItemLocalFullPath);
       uploadQueue.queueItems.push({
         targetIndex: 0,
