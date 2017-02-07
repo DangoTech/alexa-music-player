@@ -1,6 +1,6 @@
 AMAZON.RepeatIntent play again
 
-PlayPlaylist play {PlaylistName}
-PlayPlaylist play the playlist called {PlaylistName}
-PlayPlaylist play the playlist {PlaylistName}
-PlayPlaylist {PlaylistName}
+PlayPlaylist play songs in {PlaylistName}
+PlayPlaylist start the playlist {PlaylistName}
+
+PlayRandomPlaylist play a random playlist
