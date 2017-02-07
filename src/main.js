@@ -150,6 +150,9 @@ function onIntentRequest(event, context, callback) {
     case 'PlayPlaylist':
       onPlayPlaylist(event, context, callback);
       break;
+    case 'PlayRandomPlaylist':
+      onPlayRandomPlaylist(event, context, callback);
+      break;
     default:
       onUnknownIntent(event, context, callback);
   }
@@ -224,6 +227,53 @@ function onPlayPlaylist(event, context, callback) {
     else {
       AlexaService.respondWithEndSession(context);
     }
+}
+
+function onPlayRandomPlaylist(event, context, callback) {
+
+      console.log(`play random playlist`);
+      let firebase = require('firebase');
+      let FIREBASE_CONFIG = require('../config/firebase-config.json');
+      let FIREBASE_USERNAME = FIREBASE_CONFIG.USER.USERNAME;
+      let FIREBASE_PASSWORD = FIREBASE_CONFIG.USER.PASSWORD;
+      try {
+        firebase.initializeApp(FIREBASE_CONFIG.CONFIG);
+      }
+      catch (e) {}
+
+      // log-in to firebase
+      firebase.auth().signInWithEmailAndPassword(FIREBASE_USERNAME, FIREBASE_PASSWORD)
+        // fetch songs in playlist
+        .then(() => firebase.database().ref(`playlists`).once('value'))
+        // fetch all playlists
+        .then(playlistsDS => {
+
+          let playlistId = null;
+
+          let numOfPlaylists = playlistsDS.numChildren();
+          console.log(`numOfPlaylists ${numOfPlaylists}`);
+          if (numOfPlaylists > 0) {
+            let playlistIds = [];
+
+            playlistsDS.forEach(playlistDS => {
+              playlistIds.push(playlistDS.key);
+            });
+
+            console.log(playlistIds);
+
+            playlistId = playlistIds[Math.floor(Math.random() * numOfPlaylists)];
+            
+          }
+
+          // if random playlist found, play the playlist, else end the session
+          if (playlistId != null) {
+            let playlist = new Playlist(playlistId, -1, 0);
+            playlist.playFirst(event, context);
+          }
+          else {
+            AlexaService.respondWithEndSession(context);
+          }
+        });
 }
 
 function onStop(event, context, callback) {
